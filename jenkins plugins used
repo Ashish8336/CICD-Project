@@ -1,0 +1,25 @@
+Jenkins Plugins:
+Pipeline Plugin - For creating and managing CI/CD pipelines.
+Git Plugin - For version control integration with Git repositories.
+SonarQube Scanner for Jenkins - For integrating SonarQube code quality analysis.
+Nexus Platform Plugin - For interacting with Nexus repositories (artifact management).
+Docker Pipeline - To build and deploy Docker images.
+Kubernetes Plugin - For deploying applications to Kubernetes clusters.
+Blue Ocean - For a modern UI and visualization of Jenkins pipelines.
+Email Extension Plugin - For sending email notifications on build status.
+Slack Notification Plugin - For sending notifications to Slack.
+Workspace Cleanup Plugin - To clean up the workspace before builds.
+OWASP Dependency-Check Plugin - To identify project dependencies and report known vulnerabilities.
+OWASP ZAP Plugin - To integrate automated security testing into the pipeline.
+Additional Tools:
+SonarQube - For static code analysis and quality checks.
+Nexus Repository Manager - For managing artifacts and dependencies.
+Docker - For containerization of applications.
+Kubernetes - For orchestration and management of containerized applications.
+Git - For version control.
+Maven/Gradle - For build automation (if applicable).
+Jenkinsfile - For defining the pipeline in a declarative manner.
+OWASP ZAP - An open-source security scanner for finding vulnerabilities in web applications.
+OWASP Dependency-Check - A tool that identifies project dependencies and checks them against known vulnerabilities.
+Integrating OWASP tools into the Jenkins pipeline helps ensure that security is considered throughout the development lifecycle, promoting safer application deployments.
+
