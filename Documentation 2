@@ -1,0 +1,330 @@
+Below is a detailed documentation for setting up a DevOps pipeline project that integrates Jenkins, SonarQube, Nexus, Docker, Kubernetes, and OWASP tools. This includes source code examples, configuration files, and all relevant commands.
+
+---
+
+# DevOps Pipeline Project Setup Documentation
+
+## Overview
+This document provides step-by-step guidance to set up a CI/CD pipeline with Jenkins, SonarQube, Nexus, Docker, Kubernetes, and OWASP tools. This setup ensures a streamlined process for building, testing, and deploying applications while maintaining code quality and security.
+
+## Prerequisites
+- Server or local machine with sufficient resources
+- Installed software:
+  - Java JDK (version 8 or higher)
+  - Docker
+  - Kubernetes (Minikube, or access to a Kubernetes cluster)
+  - Git
+  - Maven (or Gradle)
+  
+## Step-by-Step Setup
+
+### Step 1: Install Jenkins
+
+1. **Download Jenkins:**
+   ```bash
+   wget -O jenkins.war http://mirrors.jenkins.io/war-stable/latest/jenkins.war
+   ```
+
+2. **Run Jenkins:**
+   ```bash
+   java -jar jenkins.war
+   ```
+   Access Jenkins UI from `http://localhost:8080`.
+
+3. **Unlock Jenkins:**
+   - Retrieve the initial admin password:
+   ```bash
+   cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
+
+4. **Install Suggested Plugins:**
+   - Follow the prompts to install suggested plugins or select specific ones from the plugins list mentioned earlier.
+
+### Step 2: Install Required Plugins
+
+1. Access Jenkins Dashboard > Manage Jenkins > Manage Plugins.
+2. In the **Available** tab, search for and install the following plugins:
+   - Pipeline
+   - Git
+   - SonarQube Scanner for Jenkins
+   - Nexus Platform Plugin
+   - Docker Pipeline
+   - Kubernetes Plugin
+   - Blue Ocean
+   - Email Extension Plugin
+   - Slack Notification Plugin
+   - Workspace Cleanup Plugin
+   - OWASP Dependency-Check Plugin
+   - OWASP ZAP Plugin
+
+### Step 3: Install and Configure SonarQube
+
+1. **Download SonarQube:**
+   ```bash
+   wget https://binaries.sonarsource.com/Distribution/sonarqube-9.9.0.zip
+   ```
+
+2. **Unzip and Install:**
+   ```bash
+   unzip sonarqube-9.9.0.zip
+   cd sonarqube-9.9.0/bin/linux-x86-64
+   ./sonar.sh start
+   ```
+
+3. **Access SonarQube:**
+   - Open `http://localhost:9000` and create an admin account.
+
+4. **Generate Authentication Token:**
+   - Go to "My Account" > "Security" to generate a token for Jenkins.
+
+### Step 4: Install and Configure Nexus
+
+1. **Download Nexus Repository Manager:**
+   ```bash
+   wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+   ```
+
+2. **Unzip and Install:**
+   ```bash
+   tar -xvzf latest-unix.tar.gz
+   cd nexus-3.x.x-xx
+   ```
+
+3. **Run Nexus:**
+   ```bash
+   ./bin/nexus console
+   ```
+
+4. **Access Nexus:**
+   - Open `http://localhost:8081` and set up hosted repositories for your projects.
+
+### Step 5: Install and Configure Docker
+
+1. **Install Docker:**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install docker-ce docker-ce-cli containerd.io
+   ```
+
+2. **Test Docker Installation:**
+   ```bash
+   docker --version
+   ```
+
+3. **Add your user to the Docker group:**
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+
+### Step 6: Install and Configure Kubernetes
+
+1. **Install Minikube:**
+   ```bash
+   curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+   chmod +x minikube
+   sudo mv minikube /usr/local/bin/
+   ```
+
+2. **Start Minikube:**
+   ```bash
+   minikube start
+   ```
+
+3. **Verify Kubernetes Setup:**
+   ```bash
+   kubectl get nodes
+   ```
+
+### Step 7: Set Up Git Repository
+
+1. **Create a Sample Application:**
+
+**Directory Structure:**
+```
+my-app/
+│
+├── Jenkinsfile
+├── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── com/
+                └── example/
+                    └── MyApp.java
+```
+
+2. **Sample `pom.xml` Configuration (for Maven-based projects):**
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+3. **Sample `MyApp.java` Source Code:**
+```java
+package com.example;
+
+public class MyApp {
+    public static void main(String[] args) {
+        System.out.println("Hello, DevOps!");
+    }
+}
+```
+
+4. **Sample `Jenkinsfile`:**
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/my-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    sh "${scannerHome}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage('Docker Build and Push') {
+            steps {
+                script {
+                    sh 'docker build -t my-app:latest .'
+                    sh 'docker tag my-app:latest nexus.example.com/repo/my-app:latest'
+                    sh 'docker push nexus.example.com/repo/my-app:latest'
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh 'kubectl apply -f k8s-deployment.yaml'
+                }
+            }
+        }
+        stage('OWASP ZAP') {
+            steps {
+                script {
+                    // Assuming ZAP is set up to scan the running application
+                    sh 'zap-cli quick-scan --self-contained --start-options "-host localhost -port 8080" http://localhost:8080'
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
+```
+
+### Step 8: Create Kubernetes Deployment Configuration
+
+1. **Sample `k8s-deployment.yaml`:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        image: nexus.example.com/repo/my-app:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: my-app
+```
+
+### Step 9: Trigger the Pipeline in Jenkins
+
+1. **Create a New Pipeline Job:**
+   - Go to Jenkins Dashboard > New Item.
+   - Enter a name for your job and select "Pipeline".
+
+2. **Configure SCM:**
+   - In the pipeline configuration, set the repository URL and credentials pointing to your Git repository housing the application and `Jenkinsfile`.
+
+3. **Run Your Pipeline:**
+   - Click "Build Now" from the job dashboard to trigger the pipeline.
+   - Monitor builds in the console output.
+
+### Step 10: Verify Outputs
+
+1. **Check Jenkins:**
+   - Ensure all pipeline stages were executed successfully.
+
+2. **Check SonarQube:**
+   - Access `http://localhost:9000` to review the code quality report.
+
+3. **Check Nexus:**
+   - Open `http://localhost:8081` to verify that the Docker image was uploaded successfully.
+
+4. **Check Kubernetes Deployment:**
+   ```bash
+   kubectl get deployments
+   kubectl get pods
+   ```
+
+5. **Access the Application:**
+   - Get the URL for accessing the application:
+   ```bash
+   minikube service my-app-service --url
+   ```
+
+### Conclusion
+
+By following these steps, you have successfully configured a complete DevOps pipeline using Jenkins, SonarQube, Nexus, Docker, Kubernetes, and OWASP tools. This setup promotes continuous integration and deployment, maintains code quality, and ensures security.
+
+### Notes
+- Ensure you replace placeholder values (like repository URLs, image names, etc.) with your actual project values.
+- For the OWASP ZAP integration, you may need to adjust configuration and ensure that OWASP ZAP is properly set up to run and scan as needed.
+- This documentation can be adapted as necessary based on specific project variations or organizational requirements.
+
+---
+
+Feel free to extend, modify, or refine this documentation as needed for your specific use case!
